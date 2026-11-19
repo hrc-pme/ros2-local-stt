@@ -1,0 +1,31 @@
+services:
+  stt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: local-ros2-stt:latest
+    container_name: local-ros2-stt
+    network_mode: host
+    init: true
+    restart: unless-stopped
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      MODEL_SIZE: ${STT_MODEL_SIZE:-small}
+      # Avoid Fast DDS shared-memory isolation between separate containers.
+      FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+    volumes:
+      - ${STT_MODEL_DIR:-./models}:/models:rw
+    command:
+      - ros2
+      - launch
+      - local_stt
+      - stt.launch.py
+      - model_path:=/models/faster-whisper
+      - language:=${STT_LANGUAGE:-auto}
+      - cpu_threads:=${STT_CPU_THREADS:-8}
+      - input_topic:=${STT_INPUT_TOPIC:-/audio}
+      - output_topic:=${STT_OUTPUT_TOPIC:-/speech_text}
+      - sample_rate:=${STT_SAMPLE_RATE:-16000}
+      - input_mode:=${STT_INPUT_MODE:-stream}
+      - vad_aggressiveness:=${STT_VAD_AGGRESSIVENESS:-2}
+      - silence_ms:=${STT_SILENCE_MS:-700}
